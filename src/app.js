@@ -4,6 +4,8 @@ const cors = require('cors');
 const passport = require('./config/passport');
 
 const authRoutes = require('./routes/auth.routes');
+const plantsRoutes = require('./routes/plants.routes');
+const aiRoutes = require('./routes/ai.routes');
 
 const app = express();
 
@@ -17,6 +19,8 @@ app.use(passport.initialize());
 app.get('/healthz', (_req, res) => res.json({ status: 'ok' }));
 
 app.use('/api/auth', authRoutes);
+app.use('/api/plants', plantsRoutes);
+app.use('/api/ai', aiRoutes);
 
 // Manejador de errores global
 app.use((err, _req, res, _next) => {
