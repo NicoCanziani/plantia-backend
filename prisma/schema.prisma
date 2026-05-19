@@ -1,0 +1,90 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                   Int                   @id @default(autoincrement())
+  email                String                @unique
+  password             String?
+  googleId             String?               @unique
+  name                 String
+  createdAt            DateTime              @default(now())
+  plants               Plant[]
+  wateringEvents       WateringEvent[]
+  notificationSettings NotificationSettings?
+  pushSubscriptions    PushSubscription[]
+  oauthCodes           OAuthCode[]
+}
+
+model OAuthCode {
+  id        Int      @id @default(autoincrement())
+  code      String   @unique
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  expiresAt DateTime
+  used      Boolean  @default(false)
+}
+
+model Plant {
+  id             Int             @id @default(autoincrement())
+  name           String
+  type           String
+  tag            PlantTag
+  imageUrl       String?
+  imageFileId    String?
+  caresSummary   String?
+  addedAt        DateTime        @default(now())
+  userId         Int
+  user           User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  wateringEvents WateringEvent[]
+}
+
+enum PlantTag {
+  INTERIOR
+  EXTERIOR
+}
+
+model WateringEvent {
+  id        Int      @id @default(autoincrement())
+  title     String
+  date      DateTime
+  season    Season
+  frequency String
+  notes     String?
+  completed Boolean  @default(false)
+  plantId   Int
+  plant     Plant    @relation(fields: [plantId], references: [id], onDelete: Cascade)
+  userId    Int
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  createdAt DateTime @default(now())
+}
+
+enum Season {
+  PRIMAVERA
+  VERANO
+  OTONO
+  INVIERNO
+}
+
+model NotificationSettings {
+  id           Int     @id @default(autoincrement())
+  userId       Int     @unique
+  user         User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  pushEnabled  Boolean @default(false)
+  emailEnabled Boolean @default(false)
+  reminderTime String  @default("08:00")
+}
+
+model PushSubscription {
+  id       Int    @id @default(autoincrement())
+  userId   Int
+  user     User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+  endpoint String @unique
+  p256dh   String
+  auth     String
+}
