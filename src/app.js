@@ -13,8 +13,17 @@ const { startScheduler } = require('./services/scheduler.service');
 
 const app = express();
 
+const ALLOWED_ORIGINS = [
+  process.env.CLIENT_URL,
+  'http://localhost:5173',
+  'http://localhost:5174',
+].filter(Boolean);
+
 app.use(cors({
-  origin: process.env.CLIENT_URL,
+  origin: (origin, cb) => {
+    if (!origin || ALLOWED_ORIGINS.includes(origin)) cb(null, true);
+    else cb(new Error(`CORS: origen no permitido — ${origin}`));
+  },
   credentials: true,
 }));
 app.use(express.json());
