@@ -11,7 +11,29 @@ const eventSchema = z.object({
   plantId: z.number().int().positive(),
   season: z.enum(['PRIMAVERA', 'VERANO', 'OTONO', 'INVIERNO']).optional(),
   notes: z.string().optional(),
+  repeatEnabled: z.boolean().optional(),
+  repeatEvery: z.number().int().positive().optional(),
+  repeatUnit: z.enum(['dias', 'semanas', 'meses']).optional(),
 });
+
+// Genera todas las fechas de repetición hasta `limitMonths` meses desde startDate
+function generateDates(startDate, repeatEvery, repeatUnit, limitMonths = 6) {
+  const dates = [new Date(startDate)];
+  const limit = new Date(startDate);
+  limit.setMonth(limit.getMonth() + limitMonths);
+
+  let current = new Date(startDate);
+  while (true) {
+    const next = new Date(current);
+    if (repeatUnit === 'dias')    next.setDate(next.getDate() + repeatEvery);
+    else if (repeatUnit === 'semanas') next.setDate(next.getDate() + repeatEvery * 7);
+    else if (repeatUnit === 'meses')   next.setMonth(next.getMonth() + repeatEvery);
+    if (next > limit) break;
+    dates.push(new Date(next));
+    current = next;
+  }
+  return dates;
+}
 
 const eventUpdateSchema = eventSchema.partial();
 
@@ -45,14 +67,28 @@ async function createEvent(req, res) {
     });
   }
 
-  const { title, date, frequency, plantId, notes } = result.data;
+  const { title, date, frequency, plantId, notes, repeatEnabled, repeatEvery, repeatUnit } = result.data;
 
   const plant = await prisma.plant.findFirst({ where: { id: plantId, userId: req.userId } });
   if (!plant) return res.status(404).json({ error: 'Planta no encontrada' });
 
+  // Evento recurrente: crear uno por cada fecha generada
+  if (repeatEnabled && repeatEvery && repeatUnit) {
+    const dates = generateDates(new Date(date), repeatEvery, repeatUnit);
+    const events = await Promise.all(
+      dates.map((d) =>
+        prisma.wateringEvent.create({
+          data: { title, date: d, frequency, season: getCurrentSeason(d), notes, plantId, userId: req.userId },
+          include: { plant: { select: { id: true, name: true, tag: true } } },
+        })
+      )
+    );
+    return res.status(201).json(events);
+  }
+
+  // Evento simple
   const eventDate = new Date(date);
   const season = result.data.season ?? getCurrentSeason(eventDate);
-
   const event = await prisma.wateringEvent.create({
     data: { title, date: eventDate, frequency, season, notes, plantId, userId: req.userId },
     include: { plant: { select: { id: true, name: true, tag: true } } },
