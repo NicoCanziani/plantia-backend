@@ -16,7 +16,7 @@
   "description": "Plantia backend — API REST para gestión de plantas con IA y calendario de riego",
   "dependencies": {
     "@imagekit/nodejs": "^7.6.1",
-    "@prisma/client": "^7.8.0",
+    "@prisma/client": "^5.22.0",
     "bcryptjs": "^3.0.3",
     "cors": "^2.8.6",
     "dotenv": "^17.4.2",
@@ -26,7 +26,7 @@
     "nodemailer": "^8.0.7",
     "passport": "^0.7.0",
     "passport-google-oauth20": "^2.0.0",
-    "prisma": "^7.8.0",
+    "prisma": "^5.22.0",
     "web-push": "^3.6.7",
     "zod": "^4.4.3"
   },
