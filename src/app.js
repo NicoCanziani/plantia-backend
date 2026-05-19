@@ -6,6 +6,10 @@ const passport = require('./config/passport');
 const authRoutes = require('./routes/auth.routes');
 const plantsRoutes = require('./routes/plants.routes');
 const aiRoutes = require('./routes/ai.routes');
+const calendarRoutes = require('./routes/calendar.routes');
+const notificationsRoutes = require('./routes/notifications.routes');
+
+const { startScheduler } = require('./services/scheduler.service');
 
 const app = express();
 
@@ -21,8 +25,9 @@ app.get('/healthz', (_req, res) => res.json({ status: 'ok' }));
 app.use('/api/auth', authRoutes);
 app.use('/api/plants', plantsRoutes);
 app.use('/api/ai', aiRoutes);
+app.use('/api/calendar', calendarRoutes);
+app.use('/api/notifications', notificationsRoutes);
 
-// Manejador de errores global
 app.use((err, _req, res, _next) => {
   console.error(err);
   const status = err.status || 500;
@@ -32,6 +37,7 @@ app.use((err, _req, res, _next) => {
 const PORT = process.env.PORT || 3001;
 app.listen(PORT, () => {
   console.log(`Plantia backend corriendo en http://localhost:${PORT}`);
+  startScheduler();
 });
 
 module.exports = app;
